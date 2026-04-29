@@ -1,0 +1,6 @@
+Build a role-based multi-agent workflow that can:
+- Plan implementation steps from a user request,
+- Generate a draft solution,
+- Review and request revisions when quality is not sufficient,
+- Return a final improved answer.
+

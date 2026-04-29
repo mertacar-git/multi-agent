@@ -1,148 +1,145 @@
-# Multi-Agent AI System
+# Multi-Agent AI System (Local + OpenAI)
 
-A lightweight multi-agent architecture that simulates real-world software teamwork by assigning a clear role to each AI agent.  
-I designed this project to explore how task planning, implementation, and quality control can be separated into specialized roles while still using a practical and resource-efficient setup.
+This project is a working role-based multi-agent workflow where:
 
-## Overview
+- **Planner** creates the execution plan,
+- **Developer** produces the implementation draft,
+- **Reviewer** evaluates and requests revisions,
+- and the orchestrator loops until approval or max iterations.
 
-This project demonstrates a collaborative AI workflow where one user request is processed by three role-specific agents:
+It is designed to run with:
+- **LM Studio** (local, OpenAI-compatible endpoint),
+- **OpenAI API key** (cloud),
+- optionally **Ollama**.
 
-- **Planner**: Understands the request and splits it into actionable steps.
-- **Developer**: Implements the plan and produces an initial solution.
-- **Reviewer**: Evaluates the output, suggests fixes, and drives iterative improvement.
+## Why This Project
 
-The objective is to mimic how human teams work in modern software projects: plan first, build second, review continuously.
+I built this to simulate real software team behavior with AI roles, instead of relying on a single general response. The goal is cleaner planning, higher quality drafts, and explicit review feedback.
 
-## Why I Built This
+## Architecture
 
-Single-agent systems are fast, but they can miss structure, quality checks, and revision loops.  
-I built this project to test whether a role-based agent pipeline can provide:
+Flow:
 
-- better task clarity,
-- more consistent output quality,
-- and improved reasoning transparency.
+`User -> Planner -> Developer -> Reviewer -> (Approve or Revise)`
 
-## Core Features
+Core components:
 
-- **Task decomposition** for turning broad goals into concrete subtasks.
-- **Role-based prompting** so each agent focuses on a single responsibility.
-- **Iterative improvement loop** to refine drafts before final output.
-- **Collaboration simulation** that mirrors real software team dynamics.
-- **Resource-aware design** with no requirement for heavy GPU infrastructure.
+- `orchestrator.py`: CLI entrypoint and iteration loop.
+- `multi_agent/config.py`: provider/env configuration loader.
+- `multi_agent/llm/openai_compat.py`: LM Studio + OpenAI compatible client.
+- `multi_agent/llm/ollama.py`: optional Ollama adapter.
+- `multi_agent/agents/*`: planner/developer/reviewer logic.
+- `multi_agent/prompts/*`: role prompts.
 
-## Agent Roles
-
-### 1) Planner Agent
-
-- Analyzes user intent.
-- Identifies constraints and priorities.
-- Produces a structured execution plan for downstream agents.
-
-### 2) Developer Agent
-
-- Consumes planner output.
-- Converts tasks into implementation-ready content.
-- Delivers a first-pass solution.
-
-### 3) Reviewer Agent
-
-- Checks quality, consistency, and completeness.
-- Detects missing steps or weak reasoning.
-- Sends feedback for revision until output quality is acceptable.
-
-## Workflow
-
-The system follows this high-level flow:
-
-`User -> Planner -> Developer -> Reviewer`
-
-In extended scenarios, the Reviewer can loop feedback back to the Developer for one or more refinement cycles.
-
-## Tech Stack
-
-- **Python** for orchestration and agent execution logic.
-- **LangChain** or **CrewAI** for multi-agent coordination patterns.
-- Modular prompt templates for role specialization.
-
-## Optimization Strategy
-
-To keep the project practical and cost-efficient:
-
-- A **single model** can be reused across all roles with different role prompts.
-- Minimal hardware assumptions are made.
-- The architecture favors prompt engineering and flow design over expensive infrastructure.
-
-## Example Execution Scenario
-
-1. User asks for a solution (for example, a product requirement draft).
-2. Planner creates a scoped plan with tasks.
-3. Developer produces a draft solution.
-4. Reviewer evaluates quality and returns improvement notes.
-5. Developer revises based on feedback.
-6. Final response is delivered.
-
-## Project Goal
-
-The main goal is to **simulate real-world AI collaboration** in a simple, reproducible setup that can be adapted to many domains (software tasks, documentation, analysis pipelines, and more).
-
-## Repository Structure
-
-Current minimal structure:
+## Project Structure
 
 ```text
 multi_agent/
-├── multi_agent.md
-└── README.md
-```
-
-As the project evolves, this can expand into:
-
-```text
-multi_agent/
-├── agents/
-│   ├── planner.py
-│   ├── developer.py
-│   └── reviewer.py
-├── prompts/
-│   ├── planner_prompt.txt
-│   ├── developer_prompt.txt
-│   └── reviewer_prompt.txt
+├── examples/
+│   └── sample_request.txt
+├── multi_agent/
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── developer.py
+│   │   ├── planner.py
+│   │   ├── reviewer.py
+│   │   └── types.py
+│   ├── llm/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── ollama.py
+│   │   └── openai_compat.py
+│   ├── prompts/
+│   │   ├── developer.md
+│   │   ├── planner.md
+│   │   └── reviewer.md
+│   ├── __init__.py
+│   └── config.py
+├── .env.example
+├── .gitignore
 ├── orchestrator.py
 ├── requirements.txt
 └── README.md
 ```
 
-## Setup (Planned)
+## Setup
 
-When code modules are added, setup can follow this pattern:
+1) Create and activate virtual environment:
 
-1. Create a virtual environment:
-   - `python -m venv .venv`
-2. Activate it:
-   - Windows: `.venv\Scripts\activate`
-3. Install dependencies:
-   - `pip install -r requirements.txt`
-4. Run the orchestrator:
-   - `python orchestrator.py`
+```bash
+python -m venv .venv
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+```
 
-## Roadmap
+2) Install dependencies:
 
-- Add concrete Python implementation for each agent role.
-- Add prompt templates and configurable task schemas.
-- Add logging and evaluation metrics for each iteration cycle.
-- Add sample tasks and benchmark-style comparisons.
+```bash
+pip install -r requirements.txt
+```
 
-## Contribution
+3) Create `.env` from `.env.example` and set provider values.
 
-Contributions are welcome as the project grows.  
-Potential contribution areas:
+## Configuration
 
-- agent prompt quality,
-- orchestration improvements,
-- evaluation and observability,
-- examples and documentation quality.
+Environment variables:
 
-## License
+- `PROVIDER=lmstudio|openai|ollama`
+- `OPENAI_BASE_URL=http://localhost:1234/v1` (LM Studio default)
+- `OPENAI_MODEL=local-model`
+- `OPENAI_API_KEY=` (required for `PROVIDER=openai`)
+- `OLLAMA_BASE_URL=http://localhost:11434`
+- `OLLAMA_MODEL=llama3.1`
+- `TIMEOUT_SECONDS=90`
 
-License information can be added based on your preferred open-source model (MIT, Apache-2.0, etc.).
+## Run
+
+Using direct input:
+
+```bash
+python orchestrator.py --input "Design a task tracking API with clear milestones." --max-iterations 2
+```
+
+Using sample input file:
+
+```bash
+python orchestrator.py --input-file examples/sample_request.txt --max-iterations 2
+```
+
+Console output includes:
+
+- planner output,
+- developer drafts per iteration,
+- reviewer feedback per iteration,
+- final output.
+
+## Provider Modes
+
+### LM Studio (local, default)
+
+1. Start LM Studio local server with OpenAI-compatible API.
+2. Use:
+   - `PROVIDER=lmstudio`
+   - `OPENAI_BASE_URL=http://localhost:1234/v1`
+   - `OPENAI_MODEL=<your_local_model_name>`
+
+### OpenAI (API key)
+
+Use:
+- `PROVIDER=openai`
+- `OPENAI_API_KEY=<your_key>`
+- `OPENAI_MODEL=gpt-4o-mini` (or preferred model)
+
+### Ollama (optional)
+
+Use:
+- `PROVIDER=ollama`
+- `OLLAMA_BASE_URL=http://localhost:11434`
+- `OLLAMA_MODEL=llama3.1`
+
+## Notes
+
+- Reviewer approval is parsed from `APPROVED: yes|no`.
+- If reviewer does not approve within `--max-iterations`, orchestrator returns the best last draft.
+- Prompt behavior can be tuned in `multi_agent/prompts/`.
 
